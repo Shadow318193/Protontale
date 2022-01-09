@@ -1,84 +1,196 @@
 import pygame
-import sys
-import os
 import random
+from buttons import ButtonFight, ButtonAct, ButtonItem, ButtonMercy
 
-
-def load_image(name, colorkey=None):
-    fullname = os.path.join('data', 'sprites', name)
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-
-    image = pygame.image.load(fullname)
-
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
-    else:
-        image = image.convert_alpha()
-
-    return image
+from game_core import load_image
 
 
 class Wall:
 
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
+    def __init__(self, size: (int, int)):
+        self.width = size[0]
+        self.height = size[1]
+
         self.x = (800 - self.width) // 2
         self.y = (600 - self.height) // 1.5
 
+        self.font = pygame.font.Font("data/fonts/determination.otf", 32)
+
+        self.mode = -1
+
     def draw(self, screen):
-        self.x = (800 - self.width) // 2
-        self.y = (600 - self.height) // 1.5
-        screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
-        screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+        if self.mode == -2:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+        elif self.mode == -1:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+            text = self.font.render("* Протошка появляется.", True, (255, 255, 255))
+            screen.blit(text, (self.x + 20, self.y + 20))
+        elif self.mode == 0:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+        elif self.mode == 1:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+            text = self.font.render("Оценить", True, (255, 255, 255))
+            screen.blit(text, (self.x + 60, self.y + 20))
+            text = self.font.render("Говорить", True, (255, 255, 255))
+            screen.blit(text, (self.x + 360, self.y + 20))
+        elif self.mode == 2:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+        elif self.mode == 3:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+        elif self.mode == 4:
+            self.x = (800 - self.width) // 2
+            self.y = (600 - self.height) // 1.5
+            screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
+            screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+            text = self.font.render("Оценить", True, (255, 255, 255))
+            screen.blit(text, (self.x + 60, self.y + 20))
+
+    def set_size(self, size: (int, int)):
+        self.__init__(size)
 
 
 class Creature:
 
-    def __init__(self, hp, attack, defense):
+    def __init__(self, hp):
         self.max_hp = hp
         self.hp = self.max_hp
-        self.attack = attack
-        self.defense = defense
 
 
 class Player(Creature, pygame.sprite.Sprite):
     image = load_image("soul.bmp", (255, 255, 255))
 
-    def __init__(self, *group, wall: Wall):
-        Creature.__init__(self, 20, 0, 0)
+    def __init__(self, *group, wall: Wall, buttons: [ButtonFight,
+                                                     ButtonAct,
+                                                     ButtonItem,
+                                                     ButtonMercy]):
+        Creature.__init__(self, 20)
         pygame.sprite.Sprite.__init__(self, *group)
         self.can_move = True
+        self.can_play_death_sound = True
+
+        self.my_turn = True
+        self.btn = 0
+        self.act = 0
+
+        self.in_menu = -1
 
         self.can_change_size = True
         self.size = (16, 16)
         self.image = pygame.transform.scale(Player.image, self.size)
 
         self.rect = self.image.get_rect()
-        self.rect.x = 392
-        self.rect.y = 392
+        self.rect.x = 33
+        self.rect.y = 550
+
+        self.died = False
 
         self.wall = wall
+        self.buttons = buttons
 
     def move(self, key):
         if self.can_move:
-            if key[pygame.K_UP]:
-                if not self.rect.y - 10 <= self.wall.y:
-                    self.rect.y -= 2
-            if key[pygame.K_DOWN]:
-                if not self.rect.y + 10 + self.size[1] >= self.wall.y + self.wall.height:
-                    self.rect.y += 2
-            if key[pygame.K_LEFT]:
-                if not self.rect.x - 10 <= self.wall.x:
-                    self.rect.x -= 2
-            if key[pygame.K_RIGHT]:
-                if not self.rect.x + 10 + self.size[0] >= self.wall.x + self.wall.width:
-                    self.rect.x += 2
+            if self.my_turn:
+                if self.in_menu == 0:
+                    if key[pygame.K_x]:
+                        self.buttons[self.btn].change_sprite()
+                        self.in_menu = -1
+                        self.wall.mode = -1
+                        self.rect.x = 33 + 200 * self.btn
+                        self.rect.y = 550
+                elif self.in_menu == 1:
+                    if key[pygame.K_LEFT]:
+                        if self.act:
+                            self.act = 0
+                            self.rect.x = self.wall.x + 30
+                    if key[pygame.K_RIGHT]:
+                        if not self.act:
+                            self.act = 1
+                            self.rect.x = self.wall.x + 330
+                    if key[pygame.K_x]:
+                        self.buttons[self.btn].change_sprite()
+                        self.in_menu = -1
+                        self.wall.mode = -1
+                        self.rect.x = 33 + 200 * self.btn
+                        self.rect.y = 550
+                elif self.in_menu == 2:
+                    if key[pygame.K_x]:
+                        self.buttons[self.btn].change_sprite()
+                        self.in_menu = -1
+                        self.wall.mode = -1
+                        self.rect.x = 33 + 200 * self.btn
+                        self.rect.y = 550
+                elif self.in_menu == 3:
+                    if key[pygame.K_x]:
+                        self.buttons[self.btn].change_sprite()
+                        self.in_menu = -1
+                        self.wall.mode = -1
+                        self.rect.x = 33 + 200 * self.btn
+                        self.rect.y = 550
+                else:
+                    if key[pygame.K_LEFT]:
+                        if 0 < self.btn <= 3:
+                            self.buttons[self.btn].change_sprite()
+                            self.btn -= 1
+                            self.buttons[self.btn].change_sprite()
+                            self.rect.x = 33 + 200 * self.btn
+                    if key[pygame.K_RIGHT]:
+                        if 0 <= self.btn < 3:
+                            self.buttons[self.btn].change_sprite()
+                            self.btn += 1
+                            self.buttons[self.btn].change_sprite()
+                            self.rect.x = 33 + 200 * self.btn
+                    if key[pygame.K_z]:
+                        self.buttons[self.btn].change_sprite()
+                        self.in_menu = self.btn
+                        self.wall.mode = self.btn
+                        self.act = 0
+                        if self.in_menu == 1:
+                            self.rect.x = self.wall.x + 30
+                            self.rect.y = self.wall.y + 30
+            else:
+                if key[pygame.K_UP]:
+                    if not self.rect.y - 10 <= self.wall.y:
+                        self.rect.y -= 2
+                if key[pygame.K_DOWN]:
+                    if not self.rect.y + 10 + self.size[1] >= self.wall.y + self.wall.height:
+                        self.rect.y += 2
+                if key[pygame.K_LEFT]:
+                    if not self.rect.x - 10 <= self.wall.x:
+                        self.rect.x -= 2
+                if key[pygame.K_RIGHT]:
+                    if not self.rect.x + 10 + self.size[0] >= self.wall.x + self.wall.width:
+                        self.rect.x += 2
+
+    def change_turn(self):
+        if self.my_turn:
+            self.rect.x = 400 - self.size[0] // 2
+            self.rect.y = 400 - self.size[1] // 2
+            self.my_turn = False
+            self.wall.mode = -2
+        else:
+            self.btn = 0
+            self.rect.x = 33
+            self.rect.y = 550
+            self.my_turn = True
+            self.wall.mode = -1
 
     def set_size(self, size: tuple):
         if self.can_change_size:
@@ -97,10 +209,62 @@ class Player(Creature, pygame.sprite.Sprite):
             self.can_move = True
             self.can_change_size = False
 
+    def get_damage(self, damage):
+        if self.hp > 0:
+            pygame.mixer.Sound("data/snd/damage.mp3").play()
+        self.hp -= damage
+
+    def die(self):
+        pygame.mixer.music.stop()
+        if self.can_play_death_sound:
+            pygame.mixer.stop()
+            pygame.mixer.Sound("data/snd/death.mp3").play()
+        self.can_play_death_sound = False
+        self.can_move = False
+        self.can_change_size = False
+
+        x = self.rect.x
+        y = self.rect.y
+
+        death_alarm = 120
+        if death_alarm > 110:
+            self.rect.x += random.randint(-2, 2)
+            self.rect.y += random.randint(-2, 2)
+        if death_alarm == 110:
+            self.image = load_image("soul_damaged.bmp", (255, 255, 255))
+            self.image = pygame.transform.scale(self.image, self.size)
+
+            self.rect = self.image.get_rect()
+            self.rect.x = x
+            self.rect.y = y
+
+        if death_alarm > 0:
+            death_alarm -= 1
+        else:
+            self.died = True
+
+
+class Protoshka(Creature, pygame.sprite.Sprite):
+    image = load_image("protoshka.png", (255, 0, 255))
+
+    def __init__(self, *group):
+        Creature.__init__(self, 100)
+        pygame.sprite.Sprite.__init__(self, *group)
+        self.image = pygame.transform.scale(Protoshka.image, (20 * 5, 44 * 5))
+
+        self.rect = self.image.get_rect()
+        self.rect.x = 350
+        self.rect.y = 30
+
+        self.can_spare = False
+
+    def get_damage(self, damage):
+        self.hp -= damage
+
 
 class Bullet:
 
-    def __init__(self, player, size: (int, int), x: int, y: int, damage: int, direction: list, speed: int):
+    def __init__(self, player, size: (int, int), pos: (int, int), damage: int, direction: list, speed: int):
         self.player = player
 
         self.damage = damage
@@ -108,37 +272,46 @@ class Bullet:
 
         self.size = size
 
-        self.x = x
-        self.y = y
+        self.x = pos[0]
+        self.y = pos[1]
 
         self.direction = direction
         self.speed = speed
 
-    def update(self):
-        if -100 <= self.x <= 900 and - 100 <= self.y <= 700:
+    def update_bullet(self):
+        if -100 <= self.x <= 900 and -100 <= self.y <= 700:
             self.x += self.direction[0]
             self.y += self.direction[1]
         else:
-            del self
-
-        if self.player.rect.x - self.size[0] <= self.x <= self.player.rect.x + self.player.size[0] and \
-                self.player.rect.y - self.size[1] <= self.y <= self.player.rect.y + self.player.size[1] and \
-                self.can_damage:
-            self.player.hp -= self.damage
             self.can_damage = False
 
-    def draw(self, screen):
-        pygame.draw.ellipse(screen, pygame.Color("white"), (self.x, self.y, self.size[0], self.size[1]))
+        if self.player.rect.x <= self.x <= self.player.rect.x + self.player.size[0] and \
+                self.player.rect.y <= self.y <= self.player.rect.y + self.player.size[1] and \
+                self.can_damage:
+            self.player.get_damage(self.damage)
+
+            self.can_damage = False
+
+    def draw_bullet(self, screen):
+        pygame.draw.ellipse(screen, pygame.Color("white"), (self.x - self.size[0] // 2,
+                                                            self.y - self.size[1] // 2,
+                                                            self.size[0], self.size[1]))
 
 
 class NumberBullet(Bullet, pygame.sprite.Sprite):
 
-    def __init__(self, *group, player, size: (int, int), x: int, y: int, damage: int, direction: list, speed: int):
-        Bullet.__init__(self, player, size, x, y, damage, direction, speed)
+    def __init__(self, *group, player, size: (int, int), pos: (int, int), damage: int, direction: list, speed: int):
         pygame.sprite.Sprite.__init__(self, *group)
+        Bullet.__init__(self, player, size, pos, damage, direction, speed)
 
-        self.size = (16, 16)
-        self.image = load_image(f"n_{random.randint(0, 1)}.bmp", (0, 0, 0))
+        self.image = load_image(f"n_{random.randint(0, 9)}.bmp", (0, 0, 0))
+        self.image = pygame.transform.scale(self.image, self.size)
 
-    def draw(self, screen):
-        pass
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x - self.size[0] // 2
+        self.rect.y = self.y - self.size[0] // 2
+
+    def draw_bullet(self, surface):
+        if self.can_damage:
+            self.rect.x = self.x - self.size[0] // 2
+            self.rect.y = self.y - self.size[1] // 2
