@@ -18,7 +18,17 @@ class Wall:
 
         self.mode = -1
 
-    def draw(self, screen):
+        self.power = pygame.sprite.Sprite()
+        image = load_image("power.png", (255, 0, 255))
+        image = pygame.transform.scale(image, (self.width - 10,
+                                               self.height - 10))
+        self.power.image = image
+        self.power.rect = self.power.image.get_rect()
+        self.power.rect.x = self.x + 5
+        self.power.rect.y = self.y + 5
+
+    def draw(self, screen, group):
+        group.remove(self.power)
         if self.mode == -2:
             self.x = (800 - self.width) // 2
             self.y = (600 - self.height) // 1.5
@@ -36,6 +46,7 @@ class Wall:
             self.y = (600 - self.height) // 1.5
             screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
             screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
+            group.add(self.power)
         elif self.mode == 1:
             self.x = (800 - self.width) // 2
             self.y = (600 - self.height) // 1.5
@@ -73,6 +84,9 @@ class Creature:
         self.max_hp = hp
         self.hp = self.max_hp
 
+    def get_damage(self, damage):
+        self.hp -= damage
+
 
 class Player(Creature, pygame.sprite.Sprite):
     image = load_image("soul.bmp", (255, 255, 255))
@@ -105,16 +119,15 @@ class Player(Creature, pygame.sprite.Sprite):
         self.wall = wall
         self.buttons = buttons
 
-    def move(self, key):
+        if not self.my_turn:
+            buttons[0].change_sprite()
+
+    def move(self, key, enemy: Creature):
         if self.can_move:
             if self.my_turn:
                 if self.in_menu == 0:
-                    if key[pygame.K_x]:
-                        self.buttons[self.btn].change_sprite()
-                        self.in_menu = -1
-                        self.wall.mode = -1
-                        self.rect.x = 33 + 200 * self.btn
-                        self.rect.y = 550
+                    if key[pygame.K_z]:
+                        enemy.get_damage(random.randint(5, 15))
                 elif self.in_menu == 1:
                     if key[pygame.K_LEFT]:
                         if self.act:
@@ -162,7 +175,10 @@ class Player(Creature, pygame.sprite.Sprite):
                         self.in_menu = self.btn
                         self.wall.mode = self.btn
                         self.act = 0
-                        if self.in_menu == 1:
+                        if self.in_menu == 0:
+                            self.rect.x = -100
+                            self.rect.y = -100
+                        elif self.in_menu == 1:
                             self.rect.x = self.wall.x + 30
                             self.rect.y = self.wall.y + 30
             else:
@@ -245,21 +261,26 @@ class Player(Creature, pygame.sprite.Sprite):
 
 
 class Protoshka(Creature, pygame.sprite.Sprite):
-    image = load_image("protoshka.png", (255, 0, 255))
+    sprites = {
+        "normal_spr": ("protoshka.png", (350, 30, 20 * 5, 44 * 5)),
+        "wink_spr": ("protoshka_ok.png", (310, 30, 36 * 5, 44 * 5)),
+        "hurt_spr": ("protoshka_hurt.png", (350, 30, 20 * 5, 44 * 5)),
+    }
 
     def __init__(self, *group):
         Creature.__init__(self, 100)
         pygame.sprite.Sprite.__init__(self, *group)
-        self.image = pygame.transform.scale(Protoshka.image, (20 * 5, 44 * 5))
-
-        self.rect = self.image.get_rect()
-        self.rect.x = 350
-        self.rect.y = 30
+        self.set_emotion("wink_spr")
 
         self.can_spare = False
 
-    def get_damage(self, damage):
-        self.hp -= damage
+    def set_emotion(self, emotion: str):
+        self.image = pygame.transform.scale(load_image(Protoshka.sprites[emotion][0], (255, 0, 255)),
+                                            (Protoshka.sprites[emotion][1][2],
+                                             Protoshka.sprites[emotion][1][3]))
+        self.rect = self.image.get_rect()
+        self.rect.x = Protoshka.sprites[emotion][1][0]
+        self.rect.y = Protoshka.sprites[emotion][1][1]
 
 
 class Bullet:

@@ -49,11 +49,11 @@ def run():
 
         # Игрок двигается
         if not player.my_turn:
-            player.move(key)
+            player.move(key, protoshka)
 
         # Рисование объектов, не являющиеся спрайтами.
         background.draw(screen)
-        wall.draw(screen)
+        wall.draw(screen, all_sprites)
 
         hp_bar.draw(screen)
 
@@ -103,7 +103,7 @@ def run():
                     running = False
                 if event.type == pygame.KEYDOWN:
                     if player.my_turn:
-                        player.move(pygame.key.get_pressed())
+                        player.move(pygame.key.get_pressed(), protoshka)
 
             if t == 90:
                 if player.hp > 0:
