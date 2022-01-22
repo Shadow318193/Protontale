@@ -3,12 +3,12 @@ import random
 
 import entities  # Игровые объекты.
 import interface  # Интерфейс.
-import buttons
+import buttons  # Внутриигровые кнопки.
 
 screen = None  # Защита от запуска боя при отсутствии экранного объекта.
 
 fps = 60
-clock = pygame.time.Clock()
+clock = pygame.time.Clock()  # Тики.
 
 all_sprites = pygame.sprite.Group()  # Позволяет сразу рисовать все спрайты.
 
@@ -25,7 +25,8 @@ buttons = [buttons.ButtonFight(all_sprites),
 
 player = entities.Player(all_sprites, wall=wall, buttons=buttons)
 
-hp_bar = interface.HPBar(player)
+hp_bar = interface.HPBar(player, True, (470, 475, 30, 20))
+protoshka_hp_bar = interface.HPBar(protoshka, False, (200, 50, 400, 20))
 
 pygame.mixer.music.load("data/mus/proton.mp3")
 pygame.mixer.music.set_volume(0.1)
@@ -44,18 +45,34 @@ def run():
 
     def update_state():
         # События с клавиатурой.
+        global bullets
 
         key = pygame.key.get_pressed()
 
         # Игрок двигается
         if not player.my_turn:
-            player.move(key, protoshka)
+            player.move(key)
 
         # Рисование объектов, не являющиеся спрайтами.
         background.draw(screen)
-        wall.draw(screen, all_sprites)
+
+        wall.draw(screen, all_sprites, player.items)
 
         hp_bar.draw(screen)
+        protoshka_hp_bar.draw(screen)
+
+        if not player.my_turn:
+            bullets.append(entities.NumberBullet(all_sprites,
+                                                 player=player,
+                                                 size=(16, 16),
+                                                 pos=(0, random.randint(200, 500)),
+                                                 damage=1,
+                                                 direction=[5, 0]))
+            wall.set_size((300, 200))
+        else:
+            for bullet in bullets:
+                bullet.can_damage = False
+                wall.set_size((600, 200))
 
         for bullet in bullets:
             bullet.draw_bullet(screen)
@@ -66,21 +83,13 @@ def run():
                     # Удаляет спрайт пули, выглядящей как число.
                     all_sprites.remove(bullet)
 
-        if not player.my_turn:
-            bullets.append(entities.NumberBullet(all_sprites,
-                                                 player=player,
-                                                 size=(16, 16),
-                                                 pos=(0, random.randint(200, 500)),
-                                                 damage=1,
-                                                 direction=[1, 0],
-                                                 speed=1))
-
     def is_player_dead():
         global bullets
         nonlocal black_screen
 
         if player.hp <= 0:
             bullets = []
+            black_screen = True
             player.die()
 
     if isinstance(screen, pygame.Surface):
@@ -103,7 +112,7 @@ def run():
                     running = False
                 if event.type == pygame.KEYDOWN:
                     if player.my_turn:
-                        player.move(pygame.key.get_pressed(), protoshka)
+                        player.move(pygame.key.get_pressed())
 
             if t == 90:
                 if player.hp > 0:
@@ -118,17 +127,15 @@ def run():
 
             is_player_dead()
 
-            if player.died:
-                all_sprites.remove(player)
+            if player.attacking:
+                player.attack(protoshka, protoshka_hp_bar)
 
             if black_screen:
                 screen.fill(pygame.Color("black"))
 
-            if player.hp <= 0:
+            if player.hp <= 0 and not player.died:
                 screen.blit(player.image, (player.rect.x, player.rect.y))
 
             pygame.display.flip()
 
             clock.tick(fps)
-    else:
-        print("Initialization Error")
