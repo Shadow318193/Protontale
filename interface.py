@@ -26,7 +26,7 @@ class HPBar:
         self.is_player = is_player
         self.creature = creature
         if self.is_player:
-            self.font = pygame.font.Font("data/fonts/8bitOperatorPlusSC-Bold.ttf", 16)
+            self.font = pygame.font.Font("data/fonts/determination.otf", 20)
             self.font2 = pygame.font.Font("data/fonts/mnc.ttf", 26)
         self.pos = pos
 

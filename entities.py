@@ -221,7 +221,7 @@ class Player(Creature, pygame.sprite.Sprite):
                             self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
                             self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
                     if key[pygame.K_RIGHT]:
-                        if self.act < 3:
+                        if self.act < len(self.items) - 1:
                             self.act += 1
                             self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
                             self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
