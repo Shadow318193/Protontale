@@ -22,6 +22,7 @@ class Wall:
         self.width = size[0]
         self.height = size[1]
 
+        self.real_x = (800 - self.width) // 2
         self.x = (800 - self.width) // 2
         self.y = (600 - self.height) // 1.5
 
@@ -41,13 +42,32 @@ class Wall:
         self.power.rect.x = self.x + 5
         self.power.rect.y = self.y + 5
 
-        self.line_x = 0
+        self.miss = pygame.sprite.Sprite()
+        image = load_image("miss.png", (255, 0, 255))
+        image = pygame.transform.scale(image, (118,
+                                               30))
+        self.miss.image = image
+        self.miss.rect = self.miss.image.get_rect()
+        self.miss.rect.x = self.x + self.width // 2 - 118 // 2
+        self.miss.rect.y = 20
+
+        self.line = pygame.sprite.Sprite()
+        image = load_image("line.bmp", (255, 0, 255))
+        image = pygame.transform.scale(image, (9,
+                                               self.height - 10))
+        self.line.image = image
+        self.line.rect = self.line.image.get_rect()
+        self.line.rect.x = self.x
+        self.line.rect.y = self.y + 5
+
         self.line_move = True
         self.line_invert = False
         self.line_t = 1
 
     def draw(self, screen, group, items):
         group.remove(self.power)
+        group.remove(self.line)
+        group.remove(self.miss)
         if self.mode == -2:
             self.x = (800 - self.width) // 2
             self.y = (600 - self.height) // 1.5
@@ -69,11 +89,10 @@ class Wall:
             screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
             screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
             group.add(self.power)
-            if self.line_x <= self.width - 15:
+            if self.line.rect.x <= self.x + self.width - 15:
                 if self.line_move:
-                    screen.fill(pygame.Color("black"), (self.x + self.line_x + 5, self.y + 5, 5, self.height - 10))
-                    screen.fill(pygame.Color("white"), (self.x + self.line_x + 6, self.y + 5, 3, self.height - 8))
-                    self.line_x += 4
+                    group.add(self.line)
+                    self.line.rect.x += 4
                 else:
                     if not self.line_t % 3:
                         if self.line_invert:
@@ -83,19 +102,27 @@ class Wall:
                         self.line_t = 0
                     self.line_t += 1
                     if self.line_invert:
-                        screen.fill(pygame.Color("white"), (self.x + self.line_x + 5, self.y + 5, 5, self.height - 10))
-                        screen.fill(pygame.Color("black"), (self.x + self.line_x + 6, self.y + 5, 3, self.height - 10))
+                        image = load_image("line_invert.bmp", (255, 0, 255))
+                        image = pygame.transform.scale(image, (9,
+                                                               self.height - 10))
+                        self.line.image = image
+                        group.add(self.line)
                     else:
-                        screen.fill(pygame.Color("black"), (self.x + self.line_x + 5, self.y + 5, 5, self.height - 10))
-                        screen.fill(pygame.Color("white"), (self.x + self.line_x + 6, self.y + 5, 3, self.height - 10))
+                        image = load_image("line.bmp", (255, 0, 255))
+                        image = pygame.transform.scale(image, (9,
+                                                               self.height - 10))
+                        self.line.image = image
+                        group.add(self.line)
+            else:
+                group.add(self.miss)
         elif self.mode == 1:
             self.x = (800 - self.width) // 2
             self.y = (600 - self.height) // 1.5
             screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
             screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
-            text = self.font.render("Оценить", True, (255, 255, 255))
+            text = self.font.render("* Оценить", True, (255, 255, 255))
             screen.blit(text, (self.x + 60, self.y + 20))
-            text = self.font.render("Говорить", True, (255, 255, 255))
+            text = self.font.render("* Говорить", True, (255, 255, 255))
             screen.blit(text, (self.x + 360, self.y + 20))
         elif self.mode == 2:
             self.x = (800 - self.width) // 2
@@ -182,9 +209,9 @@ class Player(Creature, pygame.sprite.Sprite):
 
         self.items = [
             Item("Кусок пиццы", 20),
-            Item("Чипсы", 10),
-            Item("Газировка", 10),
-            Item("Сухарики", 5)
+            Item("Чипсы", 15),
+            Item("Газировка", 15),
+            Item("Сухарики", 10)
         ]
 
         if not self.my_turn:
@@ -197,11 +224,11 @@ class Player(Creature, pygame.sprite.Sprite):
                 self.change_turn()
             if self.my_turn:
                 if self.in_menu == 0:
-                    if key[pygame.K_z] and not self.attacking:
+                    if key[pygame.K_z] and not self.attacking and \
+                            self.wall.line.rect.x < self.wall.x + self.wall.width - 15:
                         self.wall.line_move = False
                         self.attacking = True
-                    if self.wall.line_x >= self.wall.width - 15:
-                        self.wall.x = 0
+                    elif self.wall.line.rect.x >= self.wall.x + self.wall.width - 15:
                         self.change_turn()
                 elif self.in_menu == 1:
                     if key[pygame.K_LEFT]:
@@ -328,9 +355,9 @@ class Player(Creature, pygame.sprite.Sprite):
             self.wall.turn += 1
             self.wall.update_text()
 
-            self.wall.line_move = True
-            self.wall.line_x = 0
+            self.wall.line.rect.x = self.wall.real_x
             self.wall.line_invert = False
+            self.wall.line_move = True
 
             self.t = 120
 
@@ -395,8 +422,13 @@ class Player(Creature, pygame.sprite.Sprite):
             enemy_hp_bar.can_draw = True
         if self.t == 60:
             channel.play(pygame.mixer.Sound("data/snd/damage_enemy.wav"))
-            enemy.set_emotion("hurt_spr")
-            enemy.get_damage(random.randint(20, 30) - abs(self.wall.line_x - self.wall.width // 2) // 15)
+            enemy.get_damage(random.randint(10, 15) - abs(self.wall.x + self.wall.line.rect.x
+                                                          - self.wall.width // 2) // 30)
+            if enemy.hp > 0:
+                enemy.set_emotion("hurt_spr")
+            else:
+                enemy.set_emotion("dead_spr")
+                pygame.mixer.music.stop()
             enemy.rect.x -= 20
         if self.t == 50:
             enemy.rect.x += 40
@@ -410,7 +442,8 @@ class Player(Creature, pygame.sprite.Sprite):
             enemy.rect.x += 10
         if self.t <= 0:
             enemy.rect.x -= 5
-            enemy.set_emotion("normal_spr")
+            if enemy.hp > 0:
+                enemy.set_emotion("normal_spr")
             self.attacking = False
             enemy_hp_bar.can_draw = False
             self.change_turn()
@@ -421,6 +454,7 @@ class Protoshka(Creature, pygame.sprite.Sprite):
         "normal_spr": ("protoshka.png", (350, 30, 20 * 5, 44 * 5)),
         "wink_spr": ("protoshka_ok.png", (310, 30, 36 * 5, 44 * 5)),
         "hurt_spr": ("protoshka_hurt.png", (350, 30, 20 * 5, 44 * 5)),
+        "dead_spr": ("protoshka_dead.png", (350, 30, 20 * 5, 44 * 5))
     }
 
     def __init__(self, *group):
@@ -476,7 +510,7 @@ class Bullet:
 
 class NumberBullet(Bullet, pygame.sprite.Sprite):
 
-    def __init__(self, *group, player, size: (int, int), pos: (int, int), damage: int, direction: list):
+    def __init__(self, *group, player: Player, size: (int, int), pos: (int, int), damage: int, direction: list):
         pygame.sprite.Sprite.__init__(self, *group)
         Bullet.__init__(self, player, size, pos, damage, direction)
 
@@ -491,3 +525,28 @@ class NumberBullet(Bullet, pygame.sprite.Sprite):
         if self.can_damage:
             self.rect.x = self.x - self.size[0] // 2
             self.rect.y = self.y - self.size[1] // 2
+
+
+class NumberButton:
+
+    def __init__(self, text: str, pos: (int, int), player: Player):
+        self.font = self.font = pygame.font.Font("data/fonts/mnc.ttf", 18)
+        self.text = text
+        self.pos = pos
+
+        self.player = player
+
+        self.picked = False
+
+    def update_item(self):
+        if self.player.rect.x <= self.pos[0] <= self.player.rect.x + self.player.size[0] and \
+                self.player.rect.y <= self.pos[1] <= self.player.rect.y + self.player.size[1] and \
+                self.picked:
+            self.picked = True
+
+    def draw_item(self, screen):
+        if not self.picked:
+            text = self.font.render(self.text, True, (255, 255, 255))
+            screen.fill(pygame.Color("white"), (self.pos[0], self.pos[1], 24, 24))
+            screen.fill(pygame.Color("black"), (self.pos[0] + 2, self.pos[1] + 2, 20, 20))
+            screen.blit(text, (self.pos[0] + 3, self.pos[1] + 3))

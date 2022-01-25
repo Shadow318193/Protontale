@@ -28,12 +28,14 @@ player = entities.Player(all_sprites, wall=wall, buttons=buttons)
 hp_bar = interface.HPBar(player, True, (470, 475, 30, 20))
 protoshka_hp_bar = interface.HPBar(protoshka, False, (200, 50, 400, 20))
 
-attack_type = 0
+attack_type = 0  # Варианты атаки Протошки.
+attack_start = True
 
 pygame.mixer.music.load("data/mus/proton.mp3")
 pygame.mixer.music.set_volume(0.1)
 
 bullets = []  # Объекты, от которых игрок получает урон.
+items = []  # Объекты, которые игрок может подбирать.
 
 
 def set_params(surface):
@@ -65,15 +67,29 @@ def run():
 
         if not player.my_turn:
             if not attack_type:
-                bullets.append(entities.NumberBullet(all_sprites,
-                                                     player=player,
-                                                     size=(16, 16),
-                                                     pos=(0, random.randint(200, 500)),
-                                                     damage=1,
-                                                     direction=[5, 0]))
+                if protoshka.hp > 50:
+                    bullets.append(entities.NumberBullet(all_sprites,
+                                                         player=player,
+                                                         size=(16, 16),
+                                                         pos=(0, random.randint(200, 500)),
+                                                         damage=1,
+                                                         direction=[5, 0]))
+                else:
+                    bullets.append(entities.NumberBullet(all_sprites,
+                                                         player=player,
+                                                         size=(16, 16),
+                                                         pos=(0, random.randint(200, 500)),
+                                                         damage=1,
+                                                         direction=[8, 0]))
             elif attack_type == 1:
                 font = pygame.font.Font("data/fonts/determination.otf", 40)
                 text = font.render("2 + 2 * 2 = ?", True, (255, 255, 255))
+                if attack_start:
+                    items.append(entities.NumberButton(
+                        "6",
+                        (wall.x + 20, wall.y + wall.height - 20),
+                        player
+                    ))
                 if isinstance(screen, pygame.Surface):
                     screen.blit(text, (wall.x + 15, wall.y + 10))
 
@@ -91,6 +107,12 @@ def run():
                 if isinstance(bullet, entities.NumberBullet):
                     # Удаляет спрайт пули, выглядящей как число.
                     all_sprites.remove(bullet)
+
+        for item in items:
+            item.draw_item(screen)
+            item.update_item()
+            if item.picked:
+                all_sprites.remove(item)
 
     def is_player_dead():
         global bullets
@@ -136,8 +158,8 @@ def run():
                 global attack_type
                 if not wall.turn:
                     attack_type = 0
-                if 1 <= wall.turn <= 4:
-                    attack_type = random.randint(0, 1)
+                else:
+                    attack_type = 1
 
             all_sprites.draw(screen)
 
