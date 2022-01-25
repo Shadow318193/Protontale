@@ -102,13 +102,17 @@ class Wall:
             self.y = (600 - self.height) // 1.5
             screen.fill(pygame.Color("white"), (self.x, self.y, self.width, self.height))
             screen.fill(pygame.Color("black"), (self.x + 5, self.y + 5, self.width - 10, self.height - 10))
-            n = 0
-            for y in range(0, 2):
-                for x in range(0, 2):
-                    if len(items) - 1 >= n:
-                        text = self.font.render(items[n].name, True, (255, 255, 255))
-                        screen.blit(text, (self.x + 60 + 300 * x, self.y + 20 + 100 * y))
-                    n += 1
+            if len(items) > 0:
+                n = 0
+                for y in range(0, 2):
+                    for x in range(0, 2):
+                        if len(items) - 1 >= n:
+                            text = self.font.render(items[n].name, True, (255, 255, 255))
+                            screen.blit(text, (self.x + 60 + 300 * x, self.y + 20 + 100 * y))
+                        n += 1
+            else:
+                text = self.font.render("Нет вещей.", True, (255, 255, 255))
+                screen.blit(text, (self.x + 60, self.y + 20))
         elif self.mode == 3:
             self.x = (800 - self.width) // 2
             self.y = (600 - self.height) // 1.5
@@ -225,6 +229,16 @@ class Player(Creature, pygame.sprite.Sprite):
                             self.act += 1
                             self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
                             self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                    if key[pygame.K_UP]:
+                        if self.act > 1:
+                            self.act -= 2
+                            self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
+                            self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                    if key[pygame.K_DOWN]:
+                        if self.act < len(self.items) - 2:
+                            self.act += 2
+                            self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
+                            self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
                     if key[pygame.K_x]:
                         self.buttons[self.btn].change_sprite()
                         self.in_menu = -1
@@ -232,10 +246,11 @@ class Player(Creature, pygame.sprite.Sprite):
                         self.rect.x = 33 + 200 * self.btn
                         self.rect.y = 550
                     if key[pygame.K_z]:
-                        self.hp += self.items.pop(self.act).hp
-                        if self.hp > self.max_hp:
-                            self.hp = self.max_hp
-                        self.change_turn()
+                        if len(self.items) > 0:
+                            self.hp += self.items.pop(self.act).hp
+                            if self.hp > self.max_hp:
+                                self.hp = self.max_hp
+                            self.change_turn()
                 elif self.in_menu == 3:
                     if key[pygame.K_x]:
                         self.buttons[self.btn].change_sprite()
@@ -268,8 +283,12 @@ class Player(Creature, pygame.sprite.Sprite):
                             self.rect.x = self.wall.x + 30
                             self.rect.y = self.wall.y + 30
                         elif self.in_menu == 2:
-                            self.rect.x = self.wall.x + 30
-                            self.rect.y = self.wall.y + 30
+                            if len(self.items) > 0:
+                                self.rect.x = self.wall.x + 30
+                                self.rect.y = self.wall.y + 30
+                            else:
+                                self.rect.x = -100
+                                self.rect.y = -100
             else:
                 if key[pygame.K_UP]:
                     if not self.rect.y - 10 <= self.wall.y:

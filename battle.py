@@ -28,6 +28,8 @@ player = entities.Player(all_sprites, wall=wall, buttons=buttons)
 hp_bar = interface.HPBar(player, True, (470, 475, 30, 20))
 protoshka_hp_bar = interface.HPBar(protoshka, False, (200, 50, 400, 20))
 
+attack_type = 0
+
 pygame.mixer.music.load("data/mus/proton.mp3")
 pygame.mixer.music.set_volume(0.1)
 
@@ -62,17 +64,24 @@ def run():
         protoshka_hp_bar.draw(screen)
 
         if not player.my_turn:
-            bullets.append(entities.NumberBullet(all_sprites,
-                                                 player=player,
-                                                 size=(16, 16),
-                                                 pos=(0, random.randint(200, 500)),
-                                                 damage=1,
-                                                 direction=[5, 0]))
+            if not attack_type:
+                bullets.append(entities.NumberBullet(all_sprites,
+                                                     player=player,
+                                                     size=(16, 16),
+                                                     pos=(0, random.randint(200, 500)),
+                                                     damage=1,
+                                                     direction=[5, 0]))
+            elif attack_type == 1:
+                font = pygame.font.Font("data/fonts/determination.otf", 40)
+                text = font.render("2 + 2 * 2 = ?", True, (255, 255, 255))
+                if isinstance(screen, pygame.Surface):
+                    screen.blit(text, (wall.x + 15, wall.y + 10))
+
             wall.set_size((300, 200))
         else:
             for bullet in bullets:
                 bullet.can_damage = False
-                wall.set_size((600, 200))
+            wall.set_size((600, 200))
 
         for bullet in bullets:
             bullet.draw_bullet(screen)
@@ -122,6 +131,13 @@ def run():
                 t += 1
 
             update_state()
+
+            if player.my_turn:
+                global attack_type
+                if not wall.turn:
+                    attack_type = 0
+                if 1 <= wall.turn <= 4:
+                    attack_type = random.randint(0, 1)
 
             all_sprites.draw(screen)
 
