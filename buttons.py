@@ -3,6 +3,7 @@ from game_core import load_image
 
 
 class ButtonFight(pygame.sprite.Sprite):
+    # Кнопка атаки.
     image = load_image("fight_btn.bmp")
     image_use = load_image("fight_btn_use.bmp")
 
@@ -33,6 +34,7 @@ class ButtonFight(pygame.sprite.Sprite):
 
 
 class ButtonAct(pygame.sprite.Sprite):
+    # Кнопка действий.
     image = load_image("act_btn.bmp")
     image_use = load_image("act_btn_use.bmp")
 
@@ -63,6 +65,7 @@ class ButtonAct(pygame.sprite.Sprite):
 
 
 class ButtonItem(pygame.sprite.Sprite):
+    # Кнопка предметов.
     image = load_image("item_btn.bmp")
     image_use = load_image("item_btn_use.bmp")
 
@@ -93,6 +96,7 @@ class ButtonItem(pygame.sprite.Sprite):
 
 
 class ButtonMercy(pygame.sprite.Sprite):
+    # Кнопка пощады.
     image = load_image("mercy_btn.bmp")
     image_use = load_image("mercy_btn_use.bmp")
 

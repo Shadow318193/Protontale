@@ -55,7 +55,7 @@ def run():
 
         # Игрок двигается
         if not player.my_turn:
-            player.move(key)
+            player.move(key, protoshka)
 
         # Рисование объектов, не являющиеся спрайтами.
         background.draw(screen)
@@ -108,11 +108,14 @@ def run():
                     # Удаляет спрайт пули, выглядящей как число.
                     all_sprites.remove(bullet)
 
-        for item in items:
-            item.draw_item(screen)
-            item.update_item()
-            if item.picked:
-                all_sprites.remove(item)
+        # for item in items:
+        #     item.draw_item(screen)
+        #     item.update_item()
+        #     if item.picked:
+        #         all_sprites.remove(item)
+
+        if wall.turn >= 10:
+            protoshka.can_spare = True
 
     def is_player_dead():
         global bullets
@@ -133,7 +136,8 @@ def run():
         running = True
         while running:
 
-            if not pygame.mixer.music.get_busy():
+            if not pygame.mixer.music.get_busy() and player.hp > 0 and protoshka.hp > 0\
+                    and not protoshka.spared:
                 pygame.mixer.music.play()
 
             screen.fill(pygame.Color("black"))
@@ -143,23 +147,24 @@ def run():
                     running = False
                 if event.type == pygame.KEYDOWN:
                     if player.my_turn:
-                        player.move(pygame.key.get_pressed())
+                        player.move(pygame.key.get_pressed(), protoshka)
 
             if t == 90:
                 if player.hp > 0:
                     black_screen = False
                     player.can_move = True
-            if t < 90:
+            if t <= 90:
                 t += 1
 
             update_state()
 
-            if player.my_turn:
-                global attack_type
-                if not wall.turn:
-                    attack_type = 0
-                else:
-                    attack_type = 1
+            # TODO Атаки
+            # if player.my_turn:
+            #     global attack_type
+            #     if not wall.turn:
+            #         attack_type = 0
+            #     else:
+            #         attack_type = 1
 
             all_sprites.draw(screen)
 

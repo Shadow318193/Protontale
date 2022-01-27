@@ -1,6 +1,6 @@
 import pygame
 import entities
-from game_core import load_image
+# from game_core import load_image
 
 
 class Background:
@@ -49,14 +49,15 @@ class HPBar:
                 screen.blit(text4, (510, 472))
 
 
-class Dialogue(pygame.sprite.Sprite):
-    image = load_image("dialogue.bmp", (0, 0, 0))
-
-    def __init__(self, *group):
-        pygame.sprite.Sprite.__init__(self, *group)
-
-        self.image = Dialogue.image
-
-        self.rect = self.image.get_rect()
-        self.rect.x = 600
-        self.rect.y = 100
+# TODO Диалоги
+# class Dialogue(pygame.sprite.Sprite):
+#     image = load_image("dialogue.bmp", (0, 0, 0))
+#
+#     def __init__(self, *group):
+#         pygame.sprite.Sprite.__init__(self, *group)
+#
+#         self.image = Dialogue.image
+#
+#         self.rect = self.image.get_rect()
+#         self.rect.x = 600
+#         self.rect.y = 100
