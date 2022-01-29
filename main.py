@@ -7,7 +7,14 @@ screen = pygame.display.set_mode(size)  # Создание экрана.
 pygame.display.set_caption("Protontale")
 
 import battle  # Бой.
+import game_over  # Экран проигрыша.
 
 if __name__ == '__main__':
-    battle.set_params(screen)  # Установка экрана в скрипт.
-    battle.run()  # Запуск боя.
+    # Установка экрана в скрипты.
+    battle.set_params(screen)
+    game_over.set_params(screen)
+
+    while True:
+        battle.run()  # Запуск боя.
+        game_over.run()  # Запуск экрана проигрыша.
+        battle.init()

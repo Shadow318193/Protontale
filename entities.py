@@ -32,6 +32,8 @@ class Wall:
         self.pre_text = ("Протошка появляется!", "")
 
         self.turn = 0
+        self.pacifist = True
+        self.win = False
 
         self.power = pygame.sprite.Sprite()
         image = load_image("power.png", (255, 0, 255))
@@ -170,7 +172,7 @@ class Wall:
         self.y = (600 - self.height) // 1.5
 
     def update_text(self):
-        if 1 <= self.turn <= 9:
+        if 1 <= self.turn <= 9 and self.pacifist:
             self.pre_text = random.choice([
                 ("Электромагнитные волны повсюду.", ""),
                 ("Протоны щекочат кожу.", ""),
@@ -178,8 +180,16 @@ class Wall:
                 ("Ваши волосы встали дыбом.", ""),
                 ("Протошка ведёт себя странно.", "")
             ])
-        elif self.turn >= 10:
+        elif self.turn >= 10 and self.pacifist:
             self.pre_text = ("Протошка устал и больше не", "хочет сражаться.")
+        else:
+            self.pre_text = random.choice([
+                ("Электромагнитные волны окружили вас.", ""),
+                ("Протоны царапают кожу.", ""),
+                ("Сильное электричество...", ""),
+                ("Ваши волосы начинают рассыпаться.", ""),
+                ("Протошка ведёт себя агрессивно.", "")
+            ])
 
 
 class Creature:
@@ -323,7 +333,7 @@ class Player(Creature, pygame.sprite.Sprite):
                         self.wall.mode = -1
                         self.rect.x = 33 + 200 * self.btn
                         self.rect.y = 550
-                else:
+                elif self.in_menu == -1:
                     if key[pygame.K_LEFT]:
                         if 0 < self.btn <= 3:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
@@ -373,6 +383,9 @@ class Player(Creature, pygame.sprite.Sprite):
                 if key[pygame.K_RIGHT]:
                     if not self.rect.x + 10 + self.size[0] >= self.wall.x + self.wall.width:
                         self.rect.x += 2
+        if self.wall.win:
+            if key[pygame.K_z]:
+                pygame.quit()
 
     def change_turn(self):
         if self.my_turn:
@@ -407,6 +420,8 @@ class Player(Creature, pygame.sprite.Sprite):
 
     def set_size(self, size: tuple):
         if self.can_change_size:
+            channel.play(pygame.mixer.Sound("data/snd/bell.wav"))
+
             x = self.rect.x
             y = self.rect.y
 
@@ -418,6 +433,9 @@ class Player(Creature, pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect.x = x - self.size[0] // 4
             self.rect.y = y - self.size[1] // 4
+
+            self.max_hp = 30
+            self.hp = self.max_hp
 
             self.can_move = True
             self.can_change_size = False
@@ -468,8 +486,14 @@ class Player(Creature, pygame.sprite.Sprite):
             channel.play(pygame.mixer.Sound("data/snd/damage_enemy.wav"))
             enemy.get_damage(random.randint(10, 15) + abs(self.wall.x + self.wall.line.rect.x
                                                           - self.wall.width // 2) // 15)
-            if enemy.hp > 0:
+            if enemy.hp > 50:
                 enemy.set_emotion("hurt_spr")
+            elif 0 < enemy.hp <= 50:
+                enemy.set_emotion("hurt_spr")
+                if self.wall.pacifist:
+                    pygame.mixer.music.stop()
+                    pygame.mixer.music.unload()
+                    pygame.mixer.music.load("data/mus/angry.mp3")
             else:
                 enemy.set_emotion("dead_spr")
                 pygame.mixer.music.stop()
@@ -488,8 +512,13 @@ class Player(Creature, pygame.sprite.Sprite):
             enemy.rect.x -= 5
             self.attacking = False
             enemy_hp_bar.can_draw = False
-            if enemy.hp > 0:
+            if enemy.hp > 50:
                 enemy.set_emotion("normal_spr")
+                self.change_turn()
+            elif 0 < enemy.hp <= 50:
+                enemy.set_emotion("angry_spr")
+                self.set_size((32, 32))
+
                 self.change_turn()
             else:
                 channel.play(pygame.mixer.Sound("data/snd/spared.wav"))
@@ -497,6 +526,7 @@ class Player(Creature, pygame.sprite.Sprite):
                 self.rect.y = -100
                 enemy.rect.x = -100
                 self.wall.mode = -3
+                self.wall.win = True
                 self.can_move = False
 
 
@@ -505,7 +535,8 @@ class Protoshka(Creature, pygame.sprite.Sprite):
         "normal_spr": ("protoshka.png", (350, 30, 20 * 5, 44 * 5)),
         "wink_spr": ("protoshka_ok.png", (310, 30, 36 * 5, 44 * 5)),
         "hurt_spr": ("protoshka_hurt.png", (350, 30, 20 * 5, 44 * 5)),
-        "dead_spr": ("protoshka_dead.png", (350, 30, 20 * 5, 44 * 5))
+        "dead_spr": ("protoshka_dead.png", (350, 30, 20 * 5, 44 * 5)),
+        "angry_spr": ("protoshka_angry.png", (350, 30, 20 * 5, 44 * 5))
     }
 
     def __init__(self, *group):
@@ -579,26 +610,27 @@ class NumberBullet(Bullet, pygame.sprite.Sprite):
             self.rect.y = self.y - self.size[1] // 2
 
 
-class NumberButton:
-
-    def __init__(self, text: str, pos: (int, int), player: Player):
-        self.font = self.font = pygame.font.Font("data/fonts/mnc.ttf", 18)
-        self.text = text
-        self.pos = pos
-
-        self.player = player
-
-        self.picked = False
-
-    def update_item(self):
-        if self.player.rect.x <= self.pos[0] <= self.player.rect.x + self.player.size[0] and \
-                self.player.rect.y <= self.pos[1] <= self.player.rect.y + self.player.size[1] and \
-                self.picked:
-            self.picked = True
-
-    def draw_item(self, screen):
-        if not self.picked:
-            text = self.font.render(self.text, True, (255, 255, 255))
-            screen.fill(pygame.Color("white"), (self.pos[0], self.pos[1], 24, 24))
-            screen.fill(pygame.Color("black"), (self.pos[0] + 2, self.pos[1] + 2, 20, 20))
-            screen.blit(text, (self.pos[0] + 3, self.pos[1] + 3))
+# TODO Кнопка с числом.
+# class NumberButton:
+#
+#     def __init__(self, text: str, pos: (int, int), player: Player):
+#         self.font = self.font = pygame.font.Font("data/fonts/mnc.ttf", 18)
+#         self.text = text
+#         self.pos = pos
+#
+#         self.player = player
+#
+#         self.picked = False
+#
+#     def update_item(self):
+#         if self.player.rect.x <= self.pos[0] <= self.player.rect.x + self.player.size[0] and \
+#                 self.player.rect.y <= self.pos[1] <= self.player.rect.y + self.player.size[1] and \
+#                 self.picked:
+#             self.picked = True
+#
+#     def draw_item(self, screen):
+#         if not self.picked:
+#             text = self.font.render(self.text, True, (255, 255, 255))
+#             screen.fill(pygame.Color("white"), (self.pos[0], self.pos[1], 24, 24))
+#             screen.fill(pygame.Color("black"), (self.pos[0] + 2, self.pos[1] + 2, 20, 20))
+#             screen.blit(text, (self.pos[0] + 3, self.pos[1] + 3))
