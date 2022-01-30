@@ -58,6 +58,8 @@ def run():
                             running = False
                         else:
                             pygame.quit()
+                    if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+                        pygame.quit()
 
             all_sprites.draw(screen)
 

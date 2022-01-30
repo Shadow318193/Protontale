@@ -152,7 +152,7 @@ class Wall:
                         n += 1
             else:
                 text = self.font.render("* Нет вещей.", True, (255, 255, 255))
-                screen.blit(text, (self.x + 60, self.y + 20))
+                screen.blit(text, (self.x + 20, self.y + 20))
         elif self.mode == 3:
             self.x = (800 - self.width) // 2
             self.y = (600 - self.height) // 1.5
@@ -184,7 +184,7 @@ class Wall:
             self.pre_text = ("Протошка устал и больше не", "хочет сражаться.")
         else:
             self.pre_text = random.choice([
-                ("Электромагнитные волны окружили вас.", ""),
+                ("Электромагнитные волны окружили", "вас."),
                 ("Протоны царапают кожу.", ""),
                 ("Сильное электричество...", ""),
                 ("Ваши волосы начинают рассыпаться.", ""),
@@ -265,49 +265,79 @@ class Player(Creature, pygame.sprite.Sprite):
                         if self.act:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.act = 0
-                            self.rect.x = self.wall.x + 30
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 30
+                            else:
+                                self.rect.x = self.wall.x + 18
                     if key[pygame.K_RIGHT]:
                         if not self.act:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.act = 1
-                            self.rect.x = self.wall.x + 330
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 330
+                            else:
+                                self.rect.x = self.wall.x + 318
                     if key[pygame.K_x]:
                         self.buttons[self.btn].change_sprite()
                         self.in_menu = -1
                         self.wall.mode = -1
-                        self.rect.x = 33 + 200 * self.btn
-                        self.rect.y = 550
+                        if self.wall.pacifist:
+                            self.rect.x = 33 + 200 * self.btn
+                            self.rect.y = 550
+                        else:
+                            self.rect.x = 26 + 200 * self.btn
+                            self.rect.y = 542
                 elif self.in_menu == 2:
                     if key[pygame.K_LEFT]:
                         if self.act > 0:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.act -= 1
-                            self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
-                            self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            else:
+                                self.rect.x = self.wall.x + 18 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 22 + 100 * (self.act // 2 % 2)
                     if key[pygame.K_RIGHT]:
                         if self.act < len(self.items) - 1:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.act += 1
-                            self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
-                            self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            else:
+                                self.rect.x = self.wall.x + 18 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 22 + 100 * (self.act // 2 % 2)
                     if key[pygame.K_UP]:
                         if self.act > 1:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.act -= 2
-                            self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
-                            self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            else:
+                                self.rect.x = self.wall.x + 18 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 22 + 100 * (self.act // 2 % 2)
                     if key[pygame.K_DOWN]:
                         if self.act < len(self.items) - 2:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.act += 2
-                            self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
-                            self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 30 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 30 + 100 * (self.act // 2 % 2)
+                            else:
+                                self.rect.x = self.wall.x + 18 + 300 * (self.act % 2)
+                                self.rect.y = self.wall.y + 22 + 100 * (self.act // 2 % 2)
                     if key[pygame.K_x]:
                         self.buttons[self.btn].change_sprite()
                         self.in_menu = -1
                         self.wall.mode = -1
-                        self.rect.x = 33 + 200 * self.btn
-                        self.rect.y = 550
+                        if self.wall.pacifist:
+                            self.rect.x = 33 + 200 * self.btn
+                            self.rect.y = 550
+                        else:
+                            self.rect.x = 26 + 200 * self.btn
+                            self.rect.y = 542
                     if key[pygame.K_z]:
                         channel.play(pygame.mixer.Sound("data/snd/heal.wav"))
                         if len(self.items) > 0:
@@ -331,8 +361,12 @@ class Player(Creature, pygame.sprite.Sprite):
                         self.buttons[self.btn].change_sprite()
                         self.in_menu = -1
                         self.wall.mode = -1
-                        self.rect.x = 33 + 200 * self.btn
-                        self.rect.y = 550
+                        if self.wall.pacifist:
+                            self.rect.x = 33 + 200 * self.btn
+                            self.rect.y = 550
+                        else:
+                            self.rect.x = 26 + 200 * self.btn
+                            self.rect.y = 542
                 elif self.in_menu == -1:
                     if key[pygame.K_LEFT]:
                         if 0 < self.btn <= 3:
@@ -340,14 +374,20 @@ class Player(Creature, pygame.sprite.Sprite):
                             self.buttons[self.btn].change_sprite()
                             self.btn -= 1
                             self.buttons[self.btn].change_sprite()
-                            self.rect.x = 33 + 200 * self.btn
+                            if self.wall.pacifist:
+                                self.rect.x = 33 + 200 * self.btn
+                            else:
+                                self.rect.x = 26 + 200 * self.btn
                     if key[pygame.K_RIGHT]:
                         if 0 <= self.btn < 3:
                             channel.play(pygame.mixer.Sound("data/snd/squeak.wav"))
                             self.buttons[self.btn].change_sprite()
                             self.btn += 1
                             self.buttons[self.btn].change_sprite()
-                            self.rect.x = 33 + 200 * self.btn
+                            if self.wall.pacifist:
+                                self.rect.x = 33 + 200 * self.btn
+                            else:
+                                self.rect.x = 26 + 200 * self.btn
                     if key[pygame.K_z]:
                         channel.play(pygame.mixer.Sound("data/snd/select.wav"))
                         self.buttons[self.btn].change_sprite()
@@ -358,18 +398,30 @@ class Player(Creature, pygame.sprite.Sprite):
                             self.rect.x = -100
                             self.rect.y = -100
                         elif self.in_menu == 1:
-                            self.rect.x = self.wall.x + 30
-                            self.rect.y = self.wall.y + 30
-                        elif self.in_menu == 2:
-                            if len(self.items) > 0:
+                            if self.wall.pacifist:
                                 self.rect.x = self.wall.x + 30
                                 self.rect.y = self.wall.y + 30
+                            else:
+                                self.rect.x = self.wall.x + 18
+                                self.rect.y = self.wall.y + 22
+                        elif self.in_menu == 2:
+                            if len(self.items) > 0:
+                                if self.wall.pacifist:
+                                    self.rect.x = self.wall.x + 30
+                                    self.rect.y = self.wall.y + 30
+                                else:
+                                    self.rect.x = self.wall.x + 18
+                                    self.rect.y = self.wall.y + 22
                             else:
                                 self.rect.x = -100
                                 self.rect.y = -100
                         elif self.in_menu == 3:
-                            self.rect.x = self.wall.x + 30
-                            self.rect.y = self.wall.y + 30
+                            if self.wall.pacifist:
+                                self.rect.x = self.wall.x + 30
+                                self.rect.y = self.wall.y + 30
+                            else:
+                                self.rect.x = self.wall.x + 18
+                                self.rect.y = self.wall.y + 22
             else:
                 if key[pygame.K_UP]:
                     if not self.rect.y - 10 <= self.wall.y:
@@ -402,8 +454,15 @@ class Player(Creature, pygame.sprite.Sprite):
             self.btn = 0
             self.buttons[self.btn].change_sprite()
 
-            self.rect.x = 33
-            self.rect.y = 550
+            if self.wall.pacifist:
+                self.rect.x = 33
+            else:
+                self.rect.x = 26
+
+            if self.wall.pacifist:
+                self.rect.y = 550
+            else:
+                self.rect.y = 542
 
             self.in_menu = -1
             self.my_turn = True
